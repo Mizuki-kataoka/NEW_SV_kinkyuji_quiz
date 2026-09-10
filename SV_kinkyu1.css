@@ -1,0 +1,189 @@
+@charset "UTF-8";
+
+/*-----------------------------------
+  ルート変数：カラー・フォント・間隔
+-----------------------------------*/
+:root {
+  --color-bg:       #f0f4f8;
+  --color-card:     #ffffff;
+  --color-primary:  #a31818;
+  --color-accent:   #ca4549;
+  --color-text:     #3a172c;
+  --color-border:   #d0d7de;
+  --radius:         8px;
+  --gap:            16px;
+  --font-base:      'Helvetica Neue', Arial, sans-serif;
+  --font-heading:   'Poetsen One', cursive;
+}
+
+/*-----------------------------------
+  ベースリセット
+-----------------------------------*/
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+body {
+  font-family: var(--font-base);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+/*-----------------------------------
+  カード風コンテナ
+-----------------------------------*/
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: var(--gap);
+  background-color: var(--color-card);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+/*-----------------------------------
+  見出し
+-----------------------------------*/
+h1, h2 {
+  font-family: var(--font-heading);
+  color: var(--color-primary);
+  text-align: center;
+  margin-bottom: var(--gap);
+}
+
+/*-----------------------------------
+  テキスト入力
+-----------------------------------*/
+input[type="text"] {
+  width: 100%;
+  padding: 0.5em var(--gap);
+  margin-bottom: var(--gap);
+  font-size: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  transition: border-color .2s;
+}
+input[type="text"]:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+/*-----------------------------------
+  汎用ボタン
+-----------------------------------*/
+button {
+  display: block;
+  width: 100%;
+  padding: 0.75em;
+  margin: var(--gap) 0;
+  background-color: var(--color-primary);
+  color: #fff;
+  font-size: 1rem;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background-color .2s, transform .1s;
+}
+button:hover:enabled {
+  background-color: var(--color-accent);
+}
+button:active:enabled {
+  transform: translateY(2px);
+}
+button:disabled {
+  background-color: var(--color-border);
+  cursor: not-allowed;
+}
+
+/*-----------------------------------
+  選択肢ラベル
+-----------------------------------*/
+#quiz label {
+  display: flex;
+  align-items: center;
+  background-color: var(--color-bg);
+  padding: 0.5em;
+  margin-bottom: 0.5em;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background-color .2s, border-color .2s;
+}
+#quiz label:hover {
+  background-color: #e2f4f1;
+  border-color: var(--color-accent);
+}
+#quiz input[type="radio"],
+#quiz input[type="checkbox"] {
+  margin-right: 0.75em;
+  accent-color: var(--color-primary);
+}
+
+/*-----------------------------------
+  正誤アニメーション
+-----------------------------------*/
+@keyframes correctFlash {
+  from { background-color: #c8e6c9; }
+  to   { background-color: transparent; }
+}
+.correct {
+  animation: correctFlash 1.0s ease-out;
+}
+
+@keyframes wrongFlash {
+  from { background-color: #ffcdd2; }
+  to   { background-color: transparent; }
+}
+.wrong {
+  animation: wrongFlash 1.0s ease-out;
+}
+
+/*-----------------------------------
+  自分のエントリハイライト
+-----------------------------------*/
+.highlight {
+  background-color: #fffae6;
+  font-weight: bold;
+}
+
+/*-----------------------------------
+  ランキングリスト
+-----------------------------------*/
+#ranking {
+  list-style: decimal inside;
+  margin: 0;
+  padding: 0;
+}
+#ranking li {
+  padding: 0.5em 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+/*-----------------------------------
+  レスポンシブ：767px 以下
+-----------------------------------*/
+@media (max-width: 767px) {
+  body {
+    font-size: 16px;
+    padding: 0 8px;
+  }
+  .container {
+    padding: var(--gap) 8px;
+  }
+  button, input[type="text"] {
+    font-size: 1.1rem;
+  }
+}
+
+/* コメント */
+.comment {
+  margin-top: 24px;
+  padding: 12px;
+  background-color: #fff3cd;
+  border-left: 4px solid #ffeeba;
+  font-size: 1.1rem;
+  color: #856404;
+  border-radius: 4px;
+}

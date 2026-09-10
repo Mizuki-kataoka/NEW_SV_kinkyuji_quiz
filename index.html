@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SV緊急時対応クイズ 一覧</title>
+  <link rel="stylesheet" href="SV_kinkyu1.css">
+  <style>
+    /* 一覧専用の追加スタイル */
+    .quiz-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--gap);
+    }
+    .quiz-list li a {
+      display: block;
+      padding: var(--gap);
+      background-color: var(--color-card);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      text-align: center;
+      color: var(--color-primary);
+      font-family: var(--font-heading);
+      text-decoration: none;
+      transition: transform .1s, box-shadow .2s;
+    }
+    .quiz-list li a:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>SV緊急時対応クイズ 一覧</h1>
+
+    <ul class="quiz-list">
+      <li><a href="SV_1-5.html">地震編</a></li>
+      <li><a href="SV_2-1.html">危険行為を行う人物編</a></li>
+      <li><a href="SV_3-1.html">病人・ケガ人が店内で発生編</a></li>
+      <li><a href="SV_4-1.html">その他突発的な自然災害が発生編</a></li>
+    </ul>
+  </div>
+</body>
+</html>
