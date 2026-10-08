@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SV緊急時対応クイズ</title>
   <link rel="stylesheet" href="SV_kinkyu1.css">
 </head>
+
 <body>
   <div class="container">
     <h1>SV緊急時対応クイズ</h1>
@@ -26,174 +28,200 @@
     <!-- 結果 -->
     <div id="result"></div>
 
+    <!-- ホームへ戻る -->
+    <div style="margin-top: 20px; text-align: center;">
+      <a href="index.html"
+        style="display: inline-block; padding: 8px 16px; text-decoration: none; border: 1px solid #ccc; border-radius: 4px; color: inherit;">ホームへ戻る</a>
+    </div>
+
     <!-- ランキング -->
     <h2>ランキング</h2>
     <ol id="ranking"></ol>
     <button id="resetRanking">ランキングをリセット</button>
   </div>
 
-  <script>
-  //―――― 問題データ ――――
-  const questions = [
-    { q: '【病人・ケガ人が店内で発生】119通報する基準は何か？【複数選択可】', 
-      choices: ['対象者に意識がない',
-      '本人が救急搬送を求めている',
-      '意識はあるが返答が曖昧',
-      'スタッフが必要だと感じた場合','流血している場合'], answer:[0,1,2], multiple: true},
-      { q: '【病人・ケガ人が店内で発生】119番通報する基準に満たない場合の対応の流れは？', 
-      choices: ['必要に応じて応急処置を行う➡対象者の退店まで支援➡店舗LINEで松谷社員・前坂社員をメンションし報告',
-      '本人の意思を確認➡必要に応じてタクシー等を手配➡店舗LINEで松谷社員・前坂社員をメンションし報告',
-      '必要に応じて応急処置を行う➡対象者の退店まで支援➡店舗幹部に報告',
-    '本人の意思を確認➡店舗LINEで松谷社員・前坂社員をメンションし報告➡営業を終了し店舗清掃を行う'], answer:[0], multiple: false},
-      { q: '【病人・ケガ人が店内で発生】119番通報する基準を満たす場合の対応の流れは？', 
-      choices: ['119番通報し、救急隊員の指示に従う➡店舗LINEで松谷社員・前坂社員をメンションし報告',
-      '必要に応じて応急処置を行う➡119番通報し、救急隊員の指示に従う',
-      '119番通報し、救急隊員の指示に従う➡営業再開する',
-      '119番通報し、救急隊員の指示に従う➡電話で本社へ報告'], answer: [0], multiple: false},
+  <script type="module">
+    import { db, doc, setDoc, onSnapshot } from './firebase-config.js';
+    const quizKey = 'quizRanking_3-1';
+    const rankingDocRef = doc(db, 'rankings', quizKey);
+    //―――― 問題データ ――――
+    const questions = [
+      {
+        q: '【病人・ケガ人が店内で発生】119通報する基準は何か？【複数選択可】',
+        choices: ['対象者に意識がない',
+          '本人が救急搬送を求めている',
+          '意識はあるが返答が曖昧',
+          'スタッフが必要だと感じた場合', '流血している場合'], answer: [0, 1, 2], multiple: true
+      },
+      {
+        q: '【病人・ケガ人が店内で発生】119番通報する基準に満たない場合の対応の流れは？',
+        choices: ['必要に応じて応急処置を行う➡対象者の退店まで支援➡店舗LINEで松谷社員・前坂社員をメンションし報告',
+          '本人の意思を確認➡必要に応じてタクシー等を手配➡店舗LINEで松谷社員・前坂社員をメンションし報告',
+          '必要に応じて応急処置を行う➡対象者の退店まで支援➡店舗幹部に報告',
+          '本人の意思を確認➡店舗LINEで松谷社員・前坂社員をメンションし報告➡営業を終了し店舗清掃を行う'], answer: [0], multiple: false
+      },
+      {
+        q: '【病人・ケガ人が店内で発生】119番通報する基準を満たす場合の対応の流れは？',
+        choices: ['119番通報し、救急隊員の指示に従う➡店舗LINEで松谷社員・前坂社員をメンションし報告',
+          '必要に応じて応急処置を行う➡119番通報し、救急隊員の指示に従う',
+          '119番通報し、救急隊員の指示に従う➡営業再開する',
+          '119番通報し、救急隊員の指示に従う➡電話で本社へ報告'], answer: [0], multiple: false
+      },
     ];
 
-  //―――― ヘルパー ――――
-  function shuffleArray(arr) {
-    const a = arr.slice();
-    for (let i = a.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [a[i], a[j]] = [a[j], a[i]];
+    //―――― ヘルパー ――――
+    function shuffleArray(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
     }
-    return a;
-  }
 
-  //―――― 状態 ――――
-  let current = 0;
-  let score   = 0;
-  let history = [];
+    //―――― 状態 ――――
+    let current = 0;
+    let score = 0;
+    let history = [];
+    let currentRankings = [];
+    let currentUserName = null;
+    let currentUserScore = null;
 
-  //―――― DOM取得 ――――
-  const username  = document.getElementById('username');
-  const quizEl    = document.getElementById('quiz');
-  const submitBtn = document.getElementById('submit');
-  const resultEl  = document.getElementById('result');
-  const rankEl    = document.getElementById('ranking');
-  const resetBtn  = document.getElementById('resetRanking');
+    //―――― DOM取得 ――――
+    const username = document.getElementById('username');
+    const quizEl = document.getElementById('quiz');
+    const submitBtn = document.getElementById('submit');
+    const resultEl = document.getElementById('result');
+    const rankEl = document.getElementById('ranking');
+    const resetBtn = document.getElementById('resetRanking');
 
-  //―――― 初期化 ――――
-  submitBtn.disabled = true;
-  renderQuestion();
-  renderRanking(JSON.parse(localStorage.getItem('quizRanking_2-1')||'[]'));
+    //―――― 初期化 ――――
+    submitBtn.disabled = true;
+    renderQuestion();
+    // Firestoreからリアルタイムでランキングを取得
+    onSnapshot(rankingDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        currentRankings = docSnap.data().scores || [];
+      } else {
+        currentRankings = [];
+      }
+      renderRanking(currentRankings, currentUserName, currentUserScore);
+    });
 
-  username.addEventListener('input', () => {
-    submitBtn.disabled = !username.value.trim();
-  });
+    username.addEventListener('input', () => {
+      submitBtn.disabled = !username.value.trim();
+    });
 
-  submitBtn.addEventListener('click', () => {
-    const name = username.value.trim();
-    if (!name) return alert('名前を入力してください');
+    submitBtn.addEventListener('click', () => {
+      const name = username.value.trim();
+      if (!name) return alert('名前を入力してください');
 
-    const checked = document.querySelectorAll('input[name="choice"]:checked');
-    if (!checked.length) return alert('選択肢を選んでください');
+      const checked = document.querySelectorAll('input[name="choice"]:checked');
+      if (!checked.length) return alert('選択肢を選んでください');
 
-    const selected = Array.from(checked).map(c => parseInt(c.value, 10));
-    // ↓ここで一度だけ分割代入
-    const { q, choices, answer, multiple } = questions[current];
+      const selected = Array.from(checked).map(c => parseInt(c.value, 10));
+      // ↓ここで一度だけ分割代入
+      const { q, choices, answer, multiple } = questions[current];
 
-    const isCorrect = multiple
-      ? (selected.length === answer.length && answer.every(i => selected.includes(i)))
-      : (selected[0] === answer[0]);
-    if (isCorrect) score++;
+      const isCorrect = multiple
+        ? (selected.length === answer.length && answer.every(i => selected.includes(i)))
+        : (selected[0] === answer[0]);
+      if (isCorrect) score++;
 
-    // 履歴登録
-    history.push({ q, choices, answer, multiple, selected, isCorrect });
+      // 履歴登録
+      history.push({ q, choices, answer, multiple, selected, isCorrect });
 
-    // アニメーション＆次画面
-    const cls = isCorrect ? 'correct' : 'wrong';
-    quizEl.classList.add(cls);
-    quizEl.addEventListener('animationend', () => {
-      quizEl.classList.remove(cls);
-      current < questions.length? renderQuestion() : finishQuiz();
-    }, { once: true });
-    current++;
-  });
+      // アニメーション＆次画面
+      const cls = isCorrect ? 'correct' : 'wrong';
+      quizEl.classList.add(cls);
+      quizEl.addEventListener('animationend', () => {
+        quizEl.classList.remove(cls);
+        current < questions.length ? renderQuestion() : finishQuiz();
+      }, { once: true });
+      current++;
+    });
 
-  resetBtn.addEventListener('click', () => {
-    if (confirm('ランキングを本当にリセットしますか？')) {
-      localStorage.removeItem('quizRanking_2-1');
-      renderRanking([]);
-    }
-  });
+    resetBtn.addEventListener('click', async () => {
+      if (confirm('ランキングを本当にリセットしますか？')) {
+        await setDoc(rankingDocRef, { scores: [] });
+      }
+    });
 
-  //―――― 問題描画 ――――
-  function renderQuestion() {
-    const { q, choices, multiple } = questions[current];
-    let html = `<p>${current+1}. ${q}</p>`;
-    shuffleArray(choices.map((t,i)=>({t,i}))).forEach(({t,i}) => {
-      const type = multiple ? 'checkbox' : 'radio';
-      html += `
+    //―――― 問題描画 ――――
+    function renderQuestion() {
+      const { q, choices, multiple } = questions[current];
+      let html = `<p>${current + 1}. ${q}</p>`;
+      shuffleArray(choices.map((t, i) => ({ t, i }))).forEach(({ t, i }) => {
+        const type = multiple ? 'checkbox' : 'radio';
+        html += `
         <label>
           <input type="${type}" name="choice" value="${i}">
           ${t}
         </label>`;
-    });
-    quizEl.innerHTML = html;
-  }
+      });
+      quizEl.innerHTML = html;
+    }
 
-  //―――― 終了処理 ――――
-  function finishQuiz() {
-    const name = username.value.trim();
-    let html = `<p>${name} さんの点数：<strong>${score}</strong> / ${questions.length}</p>`;
+    //―――― 終了処理 ――――
+    function finishQuiz() {
+      const name = username.value.trim();
+      let html = `<p>${name} さんの点数：<strong>${score}</strong> / ${questions.length}</p>`;
 
-    html += '<h3>回答結果一覧</h3><ol>';
-    history.forEach((e, idx) => {
-      const { q, choices, answer, selected, isCorrect } = e;
-      const items = choices.map((txt,i) => {
-        let mark = selected.includes(i) && answer.includes(i) ? '✅'
-                 : selected.includes(i)               ? '❌'
-                 : answer.includes(i)                 ? '✔' : '';
-        return `<li style="list-style:none;">${mark} ${txt}</li>`;
-      }).join('');
-      html += `
+      html += '<h3>回答結果一覧</h3><ol>';
+      history.forEach((e, idx) => {
+        const { q, choices, answer, selected, isCorrect } = e;
+        const items = choices.map((txt, i) => {
+          let mark = selected.includes(i) && answer.includes(i) ? '✅'
+            : selected.includes(i) ? '❌'
+              : answer.includes(i) ? '✔' : '';
+          return `<li style="list-style:none;">${mark} ${txt}</li>`;
+        }).join('');
+        html += `
         <li>
-          <strong>Q${idx+1}:</strong> ${q}
+          <strong>Q${idx + 1}:</strong> ${q}
           <ul>${items}</ul>
-          <div style="color:${isCorrect?'green':'red'};">${isCorrect?'正解':'不正解'}</div>
+          <div style="color:${isCorrect ? 'green' : 'red'};">${isCorrect ? '正解' : '不正解'}</div>
         </li>`;
-    });
-    html += '</ol>';
+      });
+      html += '</ol>';
 
       function getComment(score, total) {
-  if      (score === total)      return '🤩 完璧すぎる！SVシートで最終確認をしましょう！';
-  else if (rate >= 1)     return '🤯 こんなクイズもできなかったら本当のSVには何も言えないことでしょう';
-  else                      return '💀 今すぐSVシートをくまなく見て覚えてください';
-}
-const comment = getComment(score, questions.length);
-  html += `<p class="comment">${comment}</p>`;
+        if (score === total) return '🤩 完璧すぎる！SVシートで最終確認をしましょう！';
+        else if (score >= 2) return '🥸 及第点。SVシートをちゃんと覚えましょう！';
+        else if (score >= 1) return '🤯 こんなクイズもできなかったら本当のSVには何も言えないことでしょう';
+        else return '💀 今すぐSVシートをくまなく見て覚えてください';
+      }
+      const comment = getComment(score, questions.length);
+      html += `<p class="comment">${comment}</p>`;
 
-    resultEl.innerHTML = html;
-    updateRanking(name, score);
-  }
+      resultEl.innerHTML = html;
+      currentUserName = name;
+      currentUserScore = score;
+      updateRanking(name, score);
+    }
 
-  //―――― ランキング更新 ――――
-  function updateRanking(name, score) {
-    const key = 'quizRanking_3-1';
-    const data = JSON.parse(localStorage.getItem(key) || '[]');
-    const now = new Date().toLocaleString();
-    const ex = data.find(x=>x.name===name);
-    if (ex) { if (score>ex.score) {ex.score = score; ex.date = now;}}
-    else    { data.push({name,score, date: now}); }
-    data.sort((a,b)=>b.score-a.score);
-    localStorage.setItem(key, JSON.stringify(data));
-    renderRanking(data, name, score);
-  }
+    //―――― ランキング更新 ――――
+    async function updateRanking(name, score) {
+      const now = new Date().toLocaleString();
+      let data = JSON.parse(JSON.stringify(currentRankings));
+      const ex = data.find(x => x.name === name);
+      if (ex) { if (score > ex.score) { ex.score = score; ex.date = now; } }
+      else { data.push({ name, score, date: now }); }
+      data.sort((a, b) => b.score - a.score);
+      await setDoc(rankingDocRef, { scores: data });
+    }
 
-  //―――― ランキング描画 ――――
-  function renderRanking(data, curName, curScore) {
-    let html = '', prev = null, rank=0;
-    data.forEach((x,i)=>{
-      if (x.score !== prev) { rank = i+1; prev = x.score; }
-      if (rank>10) return;
-      const cls = x.name===curName&&x.score===curScore? ' class="highlight"' : '';
-      html += `<li${cls}>${rank}位：${x.name}（${x.score}点）</li>`;
-    });
-    rankEl.innerHTML = html;
-  }
+    //―――― ランキング描画 ――――
+    function renderRanking(data, curName, curScore) {
+      let html = '', prev = null, rank = 0;
+      data.forEach((x, i) => {
+        if (x.score !== prev) { rank = i + 1; prev = x.score; }
+        if (rank > 10) return;
+        const cls = x.name === curName && x.score === curScore ? ' class="highlight"' : '';
+        html += `<li${cls}>${rank}位：${x.name}（${x.score}点）</li>`;
+      });
+      rankEl.innerHTML = html;
+    }
   </script>
 </body>
 
