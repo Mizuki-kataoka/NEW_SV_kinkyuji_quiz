@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SV緊急時対応クイズ 中級編</title>
+  <link rel="stylesheet" href="SV_kinkyu1.css">
+</head>
+
+<body class="theme-mid">
+  <div class="container">
+    <h1>SV緊急時対応クイズ</h1>
+    <h2>危険行為を行う人物編（中級編）</h2>
+
+    <!-- 名前入力 -->
+    <label>
+      名前：
+      <input id="username" type="text" placeholder="ニックネーム（20文字以内）" maxlength="20">
+    </label>
+
+    <!-- クイズ出題エリア -->
+    <div id="quiz"></div>
+
+    <!-- 回答ボタン -->
+    <button id="submit">回答を送信</button>
+
+    <!-- 結果 -->
+    <div id="result"></div>
+
+    <!-- ホームへ戻る -->
+    <div style="margin-top: 20px; text-align: center;">
+      <a href="index.html"
+        style="display: inline-block; padding: 8px 16px; text-decoration: none; border: 1px solid #ccc; border-radius: 4px; color: inherit;">ホームへ戻る</a>
+    </div>
+
+    <!-- ランキング -->
+    <h2>ランキング</h2>
+    <ol id="ranking"></ol>
+    <button id="resetRanking">ランキングをリセット</button>
+  </div>
+
+  <script type="module">
+    import { db, doc, setDoc, onSnapshot } from './firebase-config.js';
+    const quizKey = 'quizRanking_2-1_mid';
+    const rankingDocRef = doc(db, 'rankings', quizKey);
+    //―――― 問題データ ――――
+    const questions = [
+      {
+        category: '【危険行為を行う人物】',
+        q: '対象者が店内にいない場合の対応の流れは？',
+        html: '❶店舗を<input type="text" class="blank-input">し安全確保する<br>❷店舗LINEで<input type="text" class="blank-input">をメンションして報告する',
+        answers: [['施錠', 'せじょう', '施錠する', '鍵をかける', 'カギをかける'], ['事業戦略企画部社員', 'じぎょうせんりゃくきかくぶしゃいん', '事業戦略企画部']]
+      },
+      {
+        category: '【危険行為を行う人物】',
+        q: 'メンションすべき事業戦略企画部社員とは誰を指しますか？',
+        html: '<input type="text" class="blank-input">',
+        answers: [['前坂社員、松谷社員', '前坂社員松谷社員', '前坂、松谷', '松谷社員、前坂社員', '松谷社員前坂社員', '松谷、前坂', '前坂社員・松谷社員', '前坂社員 松谷社員', '松谷社員 前坂社員']]
+      },
+      {
+        category: '【危険行為を行う人物】',
+        q: '対象者が店内にいる場合の対応の流れは？',
+        html: '❶<input type="text" class="blank-input">と<input type="text" class="blank-input">を行う<br>❷<input type="text" class="blank-input">を押す（不明な場合は110番へ通報）',
+        answers: [['避難誘導', 'ひなんゆうどう'], ['安全確保', 'あんぜんかくほ'], ['非常通報ボタン', 'ひじょうつうほうぼたん', '非常通報']]
+      },
+      {
+        category: '【危険行為を行う人物】',
+        q: '安全確保とは何を指しますか？',
+        html: '❶対象者から<input type="text" class="blank-input">を取る<br>❷<input type="text" class="blank-input">になるものを手元に置く',
+        answers: [['距離', 'きょり'], ['防具', 'ぼうぐ']]
+      },
+      {
+        category: '【危険行為を行う人物】',
+        q: '店内にケガ人がいる場合の対応の流れは？',
+        html: '❶<input type="text" class="blank-input">し、救急隊員の指示に従う<br>❷店舗LINEで<input type="text" class="blank-input">をメンションして報告する',
+        answers: [['119番通報', '119ばんつうほう', '１１９番通報', '119通報', '１１９通報', '119番', '１１９番'], ['事業戦略企画部社員', 'じぎょうせんりゃくきかくぶしゃいん']]
+      },
+      {
+        category: '【危険行為を行う人物】',
+        q: '店内にケガ人がいない場合の対応の流れは？',
+        html: '❶対象者を<input type="text" class="blank-input">、警察・警備の到着まで<input type="text" class="blank-input">する<br>❷店舗LINEで<input type="text" class="blank-input">をメンションして報告する',
+        answers: [['刺激せず', 'しげきせず', '刺激しない', '刺激しないで'], ['待機', 'たいき'], ['事業戦略企画部社員', 'じぎょうせんりゃくきかくぶしゃいん']]
+      }
+    ];
+
+    //―――― 状態 ――――
+    let current = 0;
+    let score = 0;
+    let history = [];
+    let currentRankings = [];
+    let currentUserName = null;
+    let currentUserScore = null;
+
+    //―――― DOM取得 ――――
+    const username = document.getElementById('username');
+    const quizEl = document.getElementById('quiz');
+    const submitBtn = document.getElementById('submit');
+    const resultEl = document.getElementById('result');
+    const rankEl = document.getElementById('ranking');
+    const resetBtn = document.getElementById('resetRanking');
+
+    //―――― 初期化 ――――
+    submitBtn.disabled = true;
+    renderQuestion();
+
+    onSnapshot(rankingDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        currentRankings = docSnap.data().scores || [];
+      } else {
+        currentRankings = [];
+      }
+      renderRanking(currentRankings, currentUserName, currentUserScore);
+    });
+
+    username.addEventListener('input', () => {
+      submitBtn.disabled = !username.value.trim();
+    });
+
+    submitBtn.addEventListener('click', () => {
+      const name = username.value.trim();
+      if (!name) return alert('名前を入力してください');
+
+      const inputs = quizEl.querySelectorAll('.blank-input');
+      const userAnswers = Array.from(inputs).map(inp => inp.value.trim());
+
+      if (userAnswers.some(ans => !ans)) return alert('すべての空欄に入力してください');
+
+      const { q, category, html: qHtml, answers } = questions[current];
+
+      const normalize = (str) => {
+        return str.replace(/[　\s・]/g, '').toLowerCase().replace(/[Ａ-Ｚａ-ｚ０-９]/g, function (s) {
+          return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);
+        });
+      };
+
+      let isCorrect = true;
+      userAnswers.forEach((ans, i) => {
+        const allowed = answers[i].map(a => normalize(a));
+        if (!allowed.includes(normalize(ans))) {
+          isCorrect = false;
+        }
+      });
+
+      if (isCorrect) score++;
+
+      history.push({ q: category + q, qHtml, answers, userAnswers, isCorrect });
+
+      const cls = isCorrect ? 'correct' : 'wrong';
+      quizEl.classList.add(cls);
+      quizEl.addEventListener('animationend', () => {
+        quizEl.classList.remove(cls);
+        current < questions.length - 1 ? (current++, renderQuestion()) : (current++, finishQuiz());
+      }, { once: true });
+    });
+
+    resetBtn.addEventListener('click', async () => {
+      if (confirm('ランキングを本当にリセットしますか？')) {
+        await setDoc(rankingDocRef, { scores: [] });
+      }
+    });
+
+    //―――― 問題描画 ――――
+    function renderQuestion() {
+      const { category, q, html: qHtml } = questions[current];
+      let html = `<p style="color: #e91e63; font-weight: bold; margin-bottom: 8px;">${current + 1}. ${category}${q}</p>`;
+      html += `<div class="fill-in-blanks" style="margin-bottom: 24px;">${qHtml}</div>`;
+      quizEl.innerHTML = html;
+
+      const inputs = quizEl.querySelectorAll('.blank-input');
+      if (inputs.length > 0) {
+        inputs[0].focus();
+      }
+    }
+
+    //―――― 終了処理 ――――
+    function finishQuiz() {
+      quizEl.innerHTML = '';
+      submitBtn.style.display = 'none';
+      const name = username.value.trim();
+      let html = `<p>${name} さんの点数：<strong>${score}</strong> / ${questions.length}</p>`;
+
+      html += '<h3>回答結果一覧</h3><ol>';
+      history.forEach((e, idx) => {
+        const { q, qHtml, answers, userAnswers, isCorrect } = e;
+        let filledHtml = qHtml;
+        userAnswers.forEach((uAns, i) => {
+          const normalize = (str) => str.replace(/[　\s・]/g, '').toLowerCase().replace(/[Ａ-Ｚａ-ｚ０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));
+          const allowed = answers[i].map(a => normalize(a));
+          const isAnsCorrect = allowed.includes(normalize(uAns));
+          const color = isAnsCorrect ? 'green' : 'red';
+          const correctText = isAnsCorrect ? '' : `<br><span style="font-size:0.8em;">(正解: ${answers[i][0]})</span>`;
+          filledHtml = filledHtml.replace(/<input[^>]*>/, `<span style="color:${color}; font-weight:bold; border-bottom:1px solid ${color}; padding:0 4px; display:inline-block; vertical-align:top; line-height:1.2;">${uAns || '未入力'}${correctText}</span>`);
+        });
+
+        html += `
+        <li>
+          <strong>Q${idx + 1}:</strong> <span style="color:#e91e63">${q}</span>
+          <div style="margin: 8px 0; padding: 8px; background-color: #f9f9f9; border-radius: 4px;">
+            ${filledHtml}
+          </div>
+          <div style="color:${isCorrect ? 'green' : 'red'}; font-weight:bold;">${isCorrect ? '正解' : '不正解'}</div>
+        </li>`;
+      });
+      html += '</ol>';
+
+      function getComment(score, total) {
+        if (score === total) return '🤩 完璧すぎる！SVシートで最終確認をしましょう！';
+        else if (score >= total * 0.7) return '🥸 及第点。SVシートをちゃんと覚えましょう！';
+        else if (score >= total * 0.4) return '🤯 こんなクイズもできなかったら本当のSVには何も言えないことでしょう';
+        else return '💀 今すぐSVシートをくまなく見て覚えてください';
+      }
+      const comment = getComment(score, questions.length);
+      html += `<p class="comment">${comment}</p>`;
+
+      resultEl.innerHTML = html;
+      currentUserName = name;
+      currentUserScore = score;
+      updateRanking(name, score);
+    }
+
+    //―――― ランキング更新 ――――
+    async function updateRanking(name, score) {
+      const now = new Date().toLocaleString();
+      let data = JSON.parse(JSON.stringify(currentRankings));
+      const ex = data.find(x => x.name === name);
+      if (ex) { if (score > ex.score) { ex.score = score; ex.date = now; } }
+      else { data.push({ name, score, date: now }); }
+      data.sort((a, b) => b.score - a.score);
+      await setDoc(rankingDocRef, { scores: data });
+    }
+
+    //―――― ランキング描画 ――――
+    function renderRanking(data, curName, curScore) {
+      let html = '', prev = null, rank = 0;
+      data.forEach((x, i) => {
+        if (x.score !== prev) { rank = i + 1; prev = x.score; }
+        if (rank > 10) return;
+        const cls = x.name === curName && x.score === curScore ? ' class="highlight"' : '';
+        html += `<li${cls}>${rank}位：${x.name}（${x.score}点）</li>`;
+      });
+      rankEl.innerHTML = html;
+    }
+  </script>
+</body>
+
+</html>

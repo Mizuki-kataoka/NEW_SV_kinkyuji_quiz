@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SV緊急時対応クイズ 中級編</title>
+  <link rel="stylesheet" href="SV_kinkyu1.css">
+</head>
+
+<body class="theme-mid">
+  <div class="container">
+    <h1>SV緊急時対応クイズ</h1>
+    <h2>地震編（中級編）</h2>
+
+    <!-- 名前入力 -->
+    <label>
+      名前：
+      <input id="username" type="text" placeholder="ニックネーム（20文字以内）" maxlength="20">
+    </label>
+
+    <!-- クイズ出題エリア -->
+    <div id="quiz"></div>
+
+    <!-- 回答ボタン -->
+    <button id="submit">回答を送信</button>
+
+    <!-- 結果 -->
+    <div id="result"></div>
+
+    <!-- ホームへ戻る -->
+    <div style="margin-top: 20px; text-align: center;">
+      <a href="index.html"
+        style="display: inline-block; padding: 8px 16px; text-decoration: none; border: 1px solid #ccc; border-radius: 4px; color: inherit;">ホームへ戻る</a>
+    </div>
+
+    <!-- ランキング -->
+    <h2>ランキング</h2>
+    <ol id="ranking"></ol>
+    <button id="resetRanking">ランキングをリセット</button>
+  </div>
+
+  <script type="module">
+    import { db, doc, setDoc, onSnapshot } from './firebase-config.js';
+    const quizKey = 'quizRanking_1-5_mid';
+    const rankingDocRef = doc(db, 'rankings', quizKey);
+    //―――― 問題データ ――――
+    const questions = [
+      {
+        category: '【地震】',
+        q: '地震が発生している場合の対応の流れは？',
+        html: 'お客様に対して<input type="text" class="blank-input">を呼びかけ、揺れが収まるまで<input type="text" class="blank-input">する。',
+        answers: [['身を守る行動', 'みをまもるこうどう'], ['店内待機', 'てんないたいき']]
+      },
+      {
+        category: '【地震】',
+        q: '震度何以上が対応を変更する基準になるか？',
+        html: '<input type="text" class="blank-input">以上',
+        answers: [['震度5強', 'しんど5きょう', '震度５強', 'しんど５きょう', '5強', '５強']]
+      },
+      {
+        category: '【地震】',
+        q: '震度5強以上の場合、揺れが収まった後の対応の流れは？',
+        html: '❶<input type="text" class="blank-input">を行う<br>❷<input type="text" class="blank-input">へ避難誘導する',
+        answers: [['避難通路の確保', 'ひなんつうろのかくほ'], ['広域避難場所', 'こういきひなんばしょ', '広域避難所', 'こういきひなんじょ']]
+      },
+      {
+        category: '【地震】',
+        q: '避難場所に避難した後の対応の流れは？',
+        html: '❶緊急時に開放される<input type="text" class="blank-input">のWi-Fiに接続する<br>❷店舗LINEで<input type="text" class="blank-input">をメンションし報告する<br>❸<input type="text" class="blank-input">の指示に従う',
+        answers: [['00000JAPAN', '00000japan', '０００００ＪＡＰＡＮ'], ['事業戦略企画部社員', 'じぎょうせんりゃくきかくぶしゃいん', '事業戦略企画部'], ['自治体・警察・消防・社員等', '自治体警察消防社員等', '自治体・警察・消防・社員']]
+      },
+      {
+        category: '【地震】',
+        q: 'メンションすべき事業戦略企画部社員とは誰を指しますか？',
+        html: '<input type="text" class="blank-input">',
+        answers: [['前坂社員、松谷社員', '前坂社員松谷社員', '前坂、松谷', '松谷社員、前坂社員', '松谷社員前坂社員', '松谷、前坂', '前坂社員・松谷社員', '前坂社員 松谷社員', '松谷社員 前坂社員']]
+      },
+      {
+        category: '【地震】',
+        q: 'どの社員に、何を報告しますか？',
+        html: '<input type="text" class="blank-input">をメンションし、<br>❶所属<input type="text" class="blank-input"><br>❷<input type="text" class="blank-input"><br>❸<input type="text" class="blank-input"><br>❹店舗の<input type="text" class="blank-input"><br>❺自分の<input type="text" class="blank-input">（避難した場合）を報告',
+        answers: [['事業戦略企画部社員', 'じぎょうせんりゃくきかくぶしゃいん'], ['店舗名', 'てんぽめい'], ['氏名フルネーム', 'しめいふるねーむ', '氏名', 'フルネーム'], ['負傷者の発生有無と詳細', 'ふしょうしゃのはっせいうむとしょうさい', '負傷者の発生有無', '負傷者の有無'], ['被害状況', 'ひがいじょうきょう'], ['避難先', 'ひなんさき']]
+      },
+      {
+        category: '【地震】',
+        q: '震度5強未満の場合の対応の流れは？',
+        html: '<input type="text" class="blank-input">や店舗に<input type="text" class="blank-input">があるかを確認する',
+        answers: [['人的被害', 'じんてきひがい'], ['重大な被害', 'じゅうだいなひがい']]
+      },
+      {
+        category: '【地震】',
+        q: '人的被害や店舗に重大な被害がある場合の対応の流れは？',
+        html: '店舗LINEで<input type="text" class="blank-input">をメンションして報告する',
+        answers: [['事業戦略企画部社員', 'じぎょうせんりゃくきかくぶしゃいん']]
+      },
+      {
+        category: '【地震】',
+        q: '人的被害や店舗に重大な被害がない場合の対応の流れは？',
+        html: '<input type="text" class="blank-input">し、<input type="text" class="blank-input">',
+        answers: [['安全等を確認', 'あんぜんとうをかくにん', '安全等確認', '安全確認', '安全等を確認する', '安全を確認する', '安全を確認'], ['営業を再開', 'えいぎょうをさいかい', '営業再開', '営業を再開する', '営業再開する']]
+      }
+    ];
+
+    //―――― 状態 ――――
+    let current = 0;
+    let score = 0;
+    let history = [];
+    let currentRankings = [];
+    let currentUserName = null;
+    let currentUserScore = null;
+
+    //―――― DOM取得 ――――
+    const username = document.getElementById('username');
+    const quizEl = document.getElementById('quiz');
+    const submitBtn = document.getElementById('submit');
+    const resultEl = document.getElementById('result');
+    const rankEl = document.getElementById('ranking');
+    const resetBtn = document.getElementById('resetRanking');
+
+    //―――― 初期化 ――――
+    submitBtn.disabled = true;
+    renderQuestion();
+
+    onSnapshot(rankingDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        currentRankings = docSnap.data().scores || [];
+      } else {
+        currentRankings = [];
+      }
+      renderRanking(currentRankings, currentUserName, currentUserScore);
+    });
+
+    username.addEventListener('input', () => {
+      submitBtn.disabled = !username.value.trim();
+    });
+
+    submitBtn.addEventListener('click', () => {
+      const name = username.value.trim();
+      if (!name) return alert('名前を入力してください');
+
+      const inputs = quizEl.querySelectorAll('.blank-input');
+      const userAnswers = Array.from(inputs).map(inp => inp.value.trim());
+
+      if (userAnswers.some(ans => !ans)) return alert('すべての空欄に入力してください');
+
+      const { q, category, html: qHtml, answers } = questions[current];
+
+      const normalize = (str) => {
+        return str.replace(/[　\s・]/g, '').toLowerCase().replace(/[Ａ-Ｚａ-ｚ０-９]/g, function (s) {
+          return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);
+        });
+      };
+
+      let isCorrect = true;
+      userAnswers.forEach((ans, i) => {
+        const allowed = answers[i].map(a => normalize(a));
+        if (!allowed.includes(normalize(ans))) {
+          isCorrect = false;
+        }
+      });
+
+      if (isCorrect) score++;
+
+      history.push({ q: category + q, qHtml, answers, userAnswers, isCorrect });
+
+      const cls = isCorrect ? 'correct' : 'wrong';
+      quizEl.classList.add(cls);
+      quizEl.addEventListener('animationend', () => {
+        quizEl.classList.remove(cls);
+        current < questions.length - 1 ? (current++, renderQuestion()) : (current++, finishQuiz());
+      }, { once: true });
+    });
+
+    resetBtn.addEventListener('click', async () => {
+      if (confirm('ランキングを本当にリセットしますか？')) {
+        await setDoc(rankingDocRef, { scores: [] });
+      }
+    });
+
+    //―――― 問題描画 ――――
+    function renderQuestion() {
+      const { category, q, html: qHtml } = questions[current];
+      let html = `<p style="color: #e91e63; font-weight: bold; margin-bottom: 8px;">${current + 1}. ${category}${q}</p>`;
+      html += `<div class="fill-in-blanks" style="margin-bottom: 24px;">${qHtml}</div>`;
+      quizEl.innerHTML = html;
+
+      const inputs = quizEl.querySelectorAll('.blank-input');
+      if (inputs.length > 0) {
+        inputs[0].focus();
+      }
+    }
+
+    //―――― 終了処理 ――――
+    function finishQuiz() {
+      quizEl.innerHTML = '';
+      submitBtn.style.display = 'none';
+      const name = username.value.trim();
+      let html = `<p>${name} さんの点数：<strong>${score}</strong> / ${questions.length}</p>`;
+
+      html += '<h3>回答結果一覧</h3><ol>';
+      history.forEach((e, idx) => {
+        const { q, qHtml, answers, userAnswers, isCorrect } = e;
+        let filledHtml = qHtml;
+        userAnswers.forEach((uAns, i) => {
+          const normalize = (str) => str.replace(/[　\s・]/g, '').toLowerCase().replace(/[Ａ-Ｚａ-ｚ０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));
+          const allowed = answers[i].map(a => normalize(a));
+          const isAnsCorrect = allowed.includes(normalize(uAns));
+          const color = isAnsCorrect ? 'green' : 'red';
+          const correctText = isAnsCorrect ? '' : `<br><span style="font-size:0.8em;">(正解: ${answers[i][0]})</span>`;
+          filledHtml = filledHtml.replace(/<input[^>]*>/, `<span style="color:${color}; font-weight:bold; border-bottom:1px solid ${color}; padding:0 4px; display:inline-block; vertical-align:top; line-height:1.2;">${uAns || '未入力'}${correctText}</span>`);
+        });
+
+        html += `
+        <li>
+          <strong>Q${idx + 1}:</strong> <span style="color:#e91e63">${q}</span>
+          <div style="margin: 8px 0; padding: 8px; background-color: #f9f9f9; border-radius: 4px;">
+            ${filledHtml}
+          </div>
+          <div style="color:${isCorrect ? 'green' : 'red'}; font-weight:bold;">${isCorrect ? '正解' : '不正解'}</div>
+        </li>`;
+      });
+      html += '</ol>';
+
+      function getComment(score, total) {
+        if (score === total) return '🤩 完璧すぎる！SVシートで最終確認をしましょう！';
+        else if (score >= total * 0.7) return '🥸 及第点。SVシートをちゃんと覚えましょう！';
+        else if (score >= total * 0.4) return '🤯 こんなクイズもできなかったら本当のSVには何も言えないことでしょう';
+        else return '💀 今すぐSVシートをくまなく見て覚えてください';
+      }
+      const comment = getComment(score, questions.length);
+      html += `<p class="comment">${comment}</p>`;
+
+      resultEl.innerHTML = html;
+      currentUserName = name;
+      currentUserScore = score;
+      updateRanking(name, score);
+    }
+
+    //―――― ランキング更新 ――――
+    async function updateRanking(name, score) {
+      const now = new Date().toLocaleString();
+      let data = JSON.parse(JSON.stringify(currentRankings));
+      const ex = data.find(x => x.name === name);
+      if (ex) { if (score > ex.score) { ex.score = score; ex.date = now; } }
+      else { data.push({ name, score, date: now }); }
+      data.sort((a, b) => b.score - a.score);
+      await setDoc(rankingDocRef, { scores: data });
+    }
+
+    //―――― ランキング描画 ――――
+    function renderRanking(data, curName, curScore) {
+      let html = '', prev = null, rank = 0;
+      data.forEach((x, i) => {
+        if (x.score !== prev) { rank = i + 1; prev = x.score; }
+        if (rank > 10) return;
+        const cls = x.name === curName && x.score === curScore ? ' class="highlight"' : '';
+        html += `<li${cls}>${rank}位：${x.name}（${x.score}点）</li>`;
+      });
+      rankEl.innerHTML = html;
+    }
+  </script>
+</body>
+
+</html>
