@@ -4,16 +4,16 @@
   ルート変数：カラー・フォント・間隔
 -----------------------------------*/
 :root {
-  --color-bg:       #f0f4f8;
-  --color-card:     #ffffff;
-  --color-primary:  #a31818;
-  --color-accent:   #ca4549;
-  --color-text:     #3a172c;
-  --color-border:   #d0d7de;
-  --radius:         8px;
-  --gap:            16px;
-  --font-base:      'Helvetica Neue', Arial, sans-serif;
-  --font-heading:   'Poetsen One', cursive;
+  --color-bg: #f0f4f8;
+  --color-card: #ffffff;
+  --color-primary: #a31818;
+  --color-accent: #ca4549;
+  --color-text: #3a172c;
+  --color-border: #d0d7de;
+  --radius: 8px;
+  --gap: 16px;
+  --font-base: 'Helvetica Neue', Arial, sans-serif;
+  --font-heading: 'Poetsen One', cursive;
 }
 
 /*-----------------------------------
@@ -24,6 +24,7 @@
   margin: 0;
   padding: 0;
 }
+
 body {
   font-family: var(--font-base);
   background-color: var(--color-bg);
@@ -40,13 +41,14 @@ body {
   padding: var(--gap);
   background-color: var(--color-card);
   border-radius: var(--radius);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 /*-----------------------------------
   見出し
 -----------------------------------*/
-h1, h2 {
+h1,
+h2 {
   font-family: var(--font-heading);
   color: var(--color-primary);
   text-align: center;
@@ -65,6 +67,7 @@ input[type="text"] {
   border-radius: var(--radius);
   transition: border-color .2s;
 }
+
 input[type="text"]:focus {
   outline: none;
   border-color: var(--color-accent);
@@ -86,12 +89,15 @@ button {
   cursor: pointer;
   transition: background-color .2s, transform .1s;
 }
+
 button:hover:enabled {
   background-color: var(--color-accent);
 }
+
 button:active:enabled {
   transform: translateY(2px);
 }
+
 button:disabled {
   background-color: var(--color-border);
   cursor: not-allowed;
@@ -111,10 +117,12 @@ button:disabled {
   cursor: pointer;
   transition: background-color .2s, border-color .2s;
 }
+
 #quiz label:hover {
   background-color: #e2f4f1;
   border-color: var(--color-accent);
 }
+
 #quiz input[type="radio"],
 #quiz input[type="checkbox"] {
   margin-right: 0.75em;
@@ -125,17 +133,29 @@ button:disabled {
   正誤アニメーション
 -----------------------------------*/
 @keyframes correctFlash {
-  from { background-color: #c8e6c9; }
-  to   { background-color: transparent; }
+  from {
+    background-color: #c8e6c9;
+  }
+
+  to {
+    background-color: transparent;
+  }
 }
+
 .correct {
   animation: correctFlash 1.0s ease-out;
 }
 
 @keyframes wrongFlash {
-  from { background-color: #ffcdd2; }
-  to   { background-color: transparent; }
+  from {
+    background-color: #ffcdd2;
+  }
+
+  to {
+    background-color: transparent;
+  }
 }
+
 .wrong {
   animation: wrongFlash 1.0s ease-out;
 }
@@ -156,6 +176,7 @@ button:disabled {
   margin: 0;
   padding: 0;
 }
+
 #ranking li {
   padding: 0.5em 0;
   border-bottom: 1px solid var(--color-border);
@@ -169,10 +190,13 @@ button:disabled {
     font-size: 16px;
     padding: 0 8px;
   }
+
   .container {
     padding: var(--gap) 8px;
   }
-  button, input[type="text"] {
+
+  button,
+  input[type="text"] {
     font-size: 1.1rem;
   }
 }
@@ -186,4 +210,37 @@ button:disabled {
   font-size: 1.1rem;
   color: #856404;
   border-radius: 4px;
+}
+
+/* 中級編用カラーテーマ */
+body.theme-mid {
+  --color-primary: #b39b00;
+  /* #f3d307より暗めで視認性確保 */
+  --color-accent: #f3d307;
+}
+
+/* 穴埋め入力欄スタイル */
+.blank-input {
+  border: none;
+  border-bottom: 2px solid var(--color-primary);
+  background-color: transparent;
+  padding: 2px 4px;
+  margin: 0 4px;
+  font-size: 1.1rem;
+  font-family: inherit;
+  color: var(--color-text);
+  text-align: center;
+  transition: border-color 0.2s;
+  width: 150px;
+}
+
+.blank-input:focus {
+  outline: none;
+  border-bottom-color: var(--color-accent);
+}
+
+.fill-in-blanks {
+  line-height: 2.2;
+  font-size: 1.1rem;
+  margin-top: 12px;
 }
