@@ -80,7 +80,8 @@
         category: '【地震】',
         q: 'どの社員に、何を報告しますか？',
         html: '<input type="text" class="blank-input">をメンションし、<br>❶所属<input type="text" class="blank-input"><br>❷<input type="text" class="blank-input"><br>❸<input type="text" class="blank-input"><br>❹店舗の<input type="text" class="blank-input"><br>❺自分の<input type="text" class="blank-input">（避難した場合）を報告',
-        answers: [['事業戦略企画部社員', 'じぎょうせんりゃくきかくぶしゃいん'], ['店舗名', 'てんぽめい'], ['氏名フルネーム', 'しめいふるねーむ', '氏名', 'フルネーム'], ['負傷者の発生有無と詳細', 'ふしょうしゃのはっせいうむとしょうさい', '負傷者の発生有無', '負傷者の有無'], ['被害状況', 'ひがいじょうきょう'], ['避難先', 'ひなんさき']]
+        answers: [['事業戦略企画部社員', 'じぎょうせんりゃくきかくぶしゃいん'], ['店舗名', 'てんぽめい'], ['氏名フルネーム', 'しめいふるねーむ', '氏名', 'フルネーム'], ['負傷者の発生有無と詳細', 'ふしょうしゃのはっせいうむとしょうさい', '負傷者の発生有無', '負傷者の有無'], ['被害状況', 'ひがいじょうきょう'], ['避難先', 'ひなんさき']],
+        unordered: true
       },
       {
         category: '【地震】',
@@ -153,16 +154,30 @@
       };
 
       let isCorrect = true;
-      userAnswers.forEach((ans, i) => {
-        const allowed = answers[i].map(a => normalize(a));
-        if (!allowed.includes(normalize(ans))) {
-          isCorrect = false;
+      if (questions[current].unordered) {
+        let remainingAnswers = [...answers];
+        for (let i = 0; i < userAnswers.length; i++) {
+          const uAnsNorm = normalize(userAnswers[i]);
+          const matchIndex = remainingAnswers.findIndex(allowed => allowed.map(a => normalize(a)).includes(uAnsNorm));
+          if (matchIndex !== -1) {
+            remainingAnswers.splice(matchIndex, 1);
+          } else {
+            isCorrect = false;
+            break;
+          }
         }
-      });
+      } else {
+        userAnswers.forEach((ans, i) => {
+          const allowed = answers[i].map(a => normalize(a));
+          if (!allowed.includes(normalize(ans))) {
+            isCorrect = false;
+          }
+        });
+      }
 
       if (isCorrect) score++;
 
-      history.push({ q: category + q, qHtml, answers, userAnswers, isCorrect });
+      history.push({ q: category + q, qHtml, answers, userAnswers, isCorrect, unordered: questions[current].unordered });
 
       const cls = isCorrect ? 'correct' : 'wrong';
       quizEl.classList.add(cls);
@@ -181,7 +196,7 @@
     //―――― 問題描画 ――――
     function renderQuestion() {
       const { category, q, html: qHtml } = questions[current];
-      let html = `<p style="color: #e91e63; font-weight: bold; margin-bottom: 8px;">${current + 1}. ${category}${q}</p>`;
+      let html = `<p style="color: #000; font-weight: bold; margin-bottom: 8px;">${current + 1}. ${category}${q}</p>`;
       html += `<div class="fill-in-blanks" style="margin-bottom: 24px;">${qHtml}</div>`;
       quizEl.innerHTML = html;
 
@@ -200,20 +215,48 @@
 
       html += '<h3>回答結果一覧</h3><ol>';
       history.forEach((e, idx) => {
-        const { q, qHtml, answers, userAnswers, isCorrect } = e;
+        const { q, qHtml, answers, userAnswers, isCorrect, unordered } = e;
         let filledHtml = qHtml;
-        userAnswers.forEach((uAns, i) => {
-          const normalize = (str) => str.replace(/[　\s・]/g, '').toLowerCase().replace(/[Ａ-Ｚａ-ｚ０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));
-          const allowed = answers[i].map(a => normalize(a));
-          const isAnsCorrect = allowed.includes(normalize(uAns));
-          const color = isAnsCorrect ? 'green' : 'red';
-          const correctText = isAnsCorrect ? '' : `<br><span style="font-size:0.8em;">(正解: ${answers[i][0]})</span>`;
-          filledHtml = filledHtml.replace(/<input[^>]*>/, `<span style="color:${color}; font-weight:bold; border-bottom:1px solid ${color}; padding:0 4px; display:inline-block; vertical-align:top; line-height:1.2;">${uAns || '未入力'}${correctText}</span>`);
-        });
+        const normalize = (str) => str.replace(/[　\s・]/g, '').toLowerCase().replace(/[Ａ-Ｚａ-ｚ０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));
+
+        if (unordered) {
+          let remainingAnswers = [...answers];
+          let usedAnswers = new Array(userAnswers.length).fill(null);
+          
+          userAnswers.forEach((uAns, i) => {
+            const uAnsNorm = normalize(uAns);
+            const matchIndex = remainingAnswers.findIndex(allowed => allowed.map(a => normalize(a)).includes(uAnsNorm));
+            if (matchIndex !== -1) {
+              usedAnswers[i] = { isCorrect: true, allowed: remainingAnswers[matchIndex] };
+              remainingAnswers.splice(matchIndex, 1);
+            }
+          });
+          
+          userAnswers.forEach((uAns, i) => {
+            if (!usedAnswers[i]) {
+              usedAnswers[i] = { isCorrect: false, allowed: remainingAnswers.shift() || answers[i] };
+            }
+          });
+          
+          userAnswers.forEach((uAns, i) => {
+            const isAnsCorrect = usedAnswers[i].isCorrect;
+            const color = isAnsCorrect ? 'green' : 'red';
+            const correctText = isAnsCorrect ? '' : `<br><span style="font-size:0.8em;">(正解例: ${usedAnswers[i].allowed[0]})</span>`;
+            filledHtml = filledHtml.replace(/<input[^>]*>/, `<span style="color:${color}; font-weight:bold; border-bottom:1px solid ${color}; padding:0 4px; display:inline-block; vertical-align:top; line-height:1.2;">${uAns || '未入力'}${correctText}</span>`);
+          });
+        } else {
+          userAnswers.forEach((uAns, i) => {
+            const allowed = answers[i].map(a => normalize(a));
+            const isAnsCorrect = allowed.includes(normalize(uAns));
+            const color = isAnsCorrect ? 'green' : 'red';
+            const correctText = isAnsCorrect ? '' : `<br><span style="font-size:0.8em;">(正解: ${answers[i][0]})</span>`;
+            filledHtml = filledHtml.replace(/<input[^>]*>/, `<span style="color:${color}; font-weight:bold; border-bottom:1px solid ${color}; padding:0 4px; display:inline-block; vertical-align:top; line-height:1.2;">${uAns || '未入力'}${correctText}</span>`);
+          });
+        }
 
         html += `
         <li>
-          <strong>Q${idx + 1}:</strong> <span style="color:#e91e63">${q}</span>
+          <strong>Q${idx + 1}:</strong> <span style="color:#000">${q}</span>
           <div style="margin: 8px 0; padding: 8px; background-color: #f9f9f9; border-radius: 4px;">
             ${filledHtml}
           </div>
