@@ -50,13 +50,13 @@
         category: '【病人・ケガ人が店内で発生】',
         q: '119番通報する基準は何か？',
         html: '❶対象者に<input type="text" class="blank-input"><br>❷本人が<input type="text" class="blank-input">を求めている<br>❸意識はあるが<input type="text" class="blank-input">',
-        answers: [['意識がない', 'いしきがない'], ['救急搬送', 'きゅうきゅうはんそう'], ['返答が曖昧', 'へんとうがあいまい', '返答が曖昧なとき']]
+        answers: [['意識がない', 'いしきがない'], ['救急搬送', 'きゅうきゅうはんそう', '救急搬送を求めている'], ['返答が曖昧', 'へんとうがあいまい', '返答が曖昧なとき']]
       },
       {
         category: '【病人・ケガ人が店内で発生】',
         q: '119番通報する基準を満たさない場合の対応の流れは？',
         html: '❶必要に応じて<input type="text" class="blank-input">を行う<br>❷対象者の<input type="text" class="blank-input">まで支援する<br>❸店舗LINEで<input type="text" class="blank-input">をメンションして報告する',
-        answers: [['応急処置', 'おうきゅうしょち'], ['退店', 'たいてん'], ['事業戦略企画部社員', 'じぎょうせんりゃくきかくぶしゃいん']]
+        answers: [['応急処置', 'おうきゅうしょち', '応急処置を行う'], ['退店', 'たいてん'], ['事業戦略企画部社員', 'じぎょうせんりゃくきかくぶしゃいん']]
       },
       {
         category: '【病人・ケガ人が店内で発生】',
@@ -151,7 +151,7 @@
     //―――― 問題描画 ――――
     function renderQuestion() {
       const { category, q, html: qHtml } = questions[current];
-      let html = `<p style="color: #e91e63; font-weight: bold; margin-bottom: 8px;">${current + 1}. ${category}${q}</p>`;
+      let html = `<p style="color: #000; font-weight: bold; margin-bottom: 8px;">${current + 1}. ${category}${q}</p>`;
       html += `<div class="fill-in-blanks" style="margin-bottom: 24px;">${qHtml}</div>`;
       quizEl.innerHTML = html;
 
@@ -183,7 +183,7 @@
 
         html += `
         <li>
-          <strong>Q${idx + 1}:</strong> <span style="color:#e91e63">${q}</span>
+          <strong>Q${idx + 1}:</strong> <span style="color:#000">${q}</span>
           <div style="margin: 8px 0; padding: 8px; background-color: #f9f9f9; border-radius: 4px;">
             ${filledHtml}
           </div>
