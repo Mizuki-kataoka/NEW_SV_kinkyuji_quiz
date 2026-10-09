@@ -163,7 +163,7 @@
     //―――― 問題描画 ――――
     function renderQuestion() {
       const { category, q, html: qHtml } = questions[current];
-      let html = `<p style="color: #e91e63; font-weight: bold; margin-bottom: 8px;">${current + 1}. ${category}${q}</p>`;
+      let html = `<p style="color: #000; font-weight: bold; margin-bottom: 8px;">${current + 1}. ${category}${q}</p>`;
       html += `<div class="fill-in-blanks" style="margin-bottom: 24px;">${qHtml}</div>`;
       quizEl.innerHTML = html;
 
@@ -195,7 +195,7 @@
 
         html += `
         <li>
-          <strong>Q${idx + 1}:</strong> <span style="color:#e91e63">${q}</span>
+          <strong>Q${idx + 1}:</strong> <span style="color:#000">${q}</span>
           <div style="margin: 8px 0; padding: 8px; background-color: #f9f9f9; border-radius: 4px;">
             ${filledHtml}
           </div>
